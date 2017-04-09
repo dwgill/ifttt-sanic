@@ -39,10 +39,23 @@ async def wirecutter_update(request):
     }
     '''
 
-    for entry_section_name in ['EntryTitle', 'EntryUrl',
-                               'EntryContent', 'EntryId']:
-        entry_section = request.json.get(entry_section_name, '')
-        if re.search('android.tablet', entry_section, re.IGNORECASE):
+    if 'EntryUrl' not in request.json:
+        err_text = 'No EntryUrl in request to wirecutter_update on {host}.\n\n'
+        err_text += 'Full json body: {json_body}'
+        err_text = err_text.format(host=os.getenv('HOSTNAME'),
+                                   json_body=request.json)
+
+        await pb_note(title='Issue with ifttt-maker',
+                      desc=err_text)
+        return json({
+            'status': 'err',
+            'err': 'No EntryUrl'
+        }, status=400)
+
+    for entry_section in ['EntryTitle', 'EntryUrl',
+                          'EntryContent', 'EntryId']:
+        if re.search('android.tablet', request.json.get(entry_section, ''),
+                     re.IGNORECASE):
             await pb_link(
                 title='Wirecutter Android Tablet Update',
                 link_url=request.json['EntryUrl'])
