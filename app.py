@@ -54,6 +54,7 @@ async def wirecutter_update(request):
     })
 
 
+# https://ifttt.com/maker_webhooks
 async def trigger_ifttt_maker_event(event, values):
     event_url = f'https://maker.ifttt.com/trigger/{event}/with/key/{IFTTT_KEY}'
 
@@ -65,6 +66,7 @@ async def trigger_ifttt_maker_event(event, values):
     await app.loop.run_in_executor(None, post_event)
 
 
+# https://ifttt.com/applets/52387457d-maker-pushbullet-links
 async def pb_link(title, link_url):
     await trigger_ifttt_maker_event('pb_link', {
         'value1': title,
@@ -72,6 +74,7 @@ async def pb_link(title, link_url):
     })
 
 
+# https://ifttt.com/applets/52387571d-maker-pushbullet-notes
 async def pb_note(title, desc):
     await trigger_ifttt_maker_event('pb_note', {
         'value1': title,
@@ -79,6 +82,7 @@ async def pb_note(title, desc):
     })
 
 
+# https://ifttt.com/applets/52387669d-maker-pushbullet-files
 async def pb_file(title, file_url):
     await trigger_ifttt_maker_event('pb_file', {
         'value1': title,
@@ -86,6 +90,7 @@ async def pb_file(title, file_url):
     })
 
 
+# https://ifttt.com/applets/52387695d-maker-pushbullet-addresses
 async def pb_address(title, address):
     await trigger_ifttt_maker_event('pb_address', {
         'value1': title,
