@@ -40,10 +40,9 @@ async def wirecutter_update(request):
     '''
 
     if 'EntryUrl' not in request.json:
-        err_text = 'No EntryUrl in request to wirecutter_update on {host}.\n\n'
+        err_text = 'No EntryUrl in request to wirecutter_update.\n\n'
         err_text += 'Full json body: {json_body}'
-        err_text = err_text.format(host=os.getenv('HOSTNAME'),
-                                   json_body=request.json)
+        err_text = err_text.format(json_body=request.json)
 
         await pb_note(title='Issue with ifttt-maker',
                       desc=err_text)
