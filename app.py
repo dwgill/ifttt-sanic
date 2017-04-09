@@ -19,7 +19,7 @@ async def test(request):
     return json({
         'status': 'ok',
         'result': 'Hello World!'
-    )
+    })
 
 
 @app.post('/wirecutter')
