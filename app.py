@@ -1,6 +1,7 @@
 from functools import partial
 from sanic import Sanic, response
 from sanic.response import json
+from sanic.exceptions import InvalidUsage
 import os
 import re
 import requests
@@ -14,12 +15,22 @@ if IFTTT_KEY == '' or IFTTT_KEY is None:
 app = Sanic()
 
 
-@app.route('/')
-async def test(request):
+def ok_resp(value=None):
     return json({
         'status': 'ok',
-        'result': 'Hello World!'
+        'result': value,
     })
+
+def err_resp(err='Something went wrong', http_status=400):
+    return json({
+        'status': 'err',
+        'err': err,
+    }, status=http_status)
+
+
+@app.route('/')
+async def test(request):
+    return ok_resp('Hello world!')
 
 
 @app.post('/wirecutter')
@@ -39,17 +50,24 @@ async def wirecutter_update(request):
     }
     '''
 
+    try:
+        json_body = request.json
+    except InvalidUsage:
+        await pb_note(title='Issue with ifttt-maker',
+            desc=('wirecutter_update received a post without a proper JSON body.\n\n'
+                  'Full body:\n\n'
+                  '{body}').format(body=request.body))
+
+        return err_resp('Invalid JSON body')
+
     if 'EntryUrl' not in request.json:
-        err_text = 'No EntryUrl in request to wirecutter_update.\n\n'
-        err_text += 'Full json body: {json_body}'
-        err_text = err_text.format(json_body=request.json)
+        err_text = ('No EntryUrl in request to wirecutter_update.\n\n'
+                    'Full json body:\n\n'
+                    '{json_body}').format(json_body=request.json)
 
         await pb_note(title='Issue with ifttt-maker',
                       desc=err_text)
-        return json({
-            'status': 'err',
-            'err': 'No EntryUrl'
-        }, status=400)
+        return err_resp('No EntryUrl')
 
     for entry_section in ['EntryTitle', 'EntryUrl',
                           'EntryContent', 'EntryId']:
@@ -60,10 +78,7 @@ async def wirecutter_update(request):
                 link_url=request.json['EntryUrl'])
             break
 
-    return json({
-        'status': 'ok',
-        'result': None
-    })
+    return ok_resp()
 
 
 # https://ifttt.com/maker_webhooks
@@ -81,23 +96,23 @@ async def trigger_ifttt_maker_event(event, values):
 # https://ifttt.com/applets/52387457d-maker-pushbullet-links
 async def pb_link(title, link_url):
     await trigger_ifttt_maker_event('pb_link', {
-        'value1': title,
-        'value2': link_url
+        'value1': str(title).strip(),
+        'value2': str(link_url).strip()
     })
 
 
 # https://ifttt.com/applets/52387571d-maker-pushbullet-notes
 async def pb_note(title, desc):
     await trigger_ifttt_maker_event('pb_note', {
-        'value1': title,
-        'value2': desc
+        'value1': str(title).strip(),
+        'value2': str(desc).strip()
     })
 
 
 # https://ifttt.com/applets/52387669d-maker-pushbullet-files
 async def pb_file(title, file_url):
     await trigger_ifttt_maker_event('pb_file', {
-        'value1': title,
+        'value1': str(title).strip(),
         'value2': file_url
     })
 
@@ -105,7 +120,7 @@ async def pb_file(title, file_url):
 # https://ifttt.com/applets/52387695d-maker-pushbullet-addresses
 async def pb_address(title, address):
     await trigger_ifttt_maker_event('pb_address', {
-        'value1': title,
+        'value1': str(title).strip(),
         'value2': address
     })
 
